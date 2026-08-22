@@ -40,9 +40,11 @@ jobs:
             set -e
             cmake -B build -DCMAKE_BUILD_TYPE=Release -DBSDSENSORS_STATIC_BIN=ON
             cmake --build build
+            file build/bsdsensors
+            readelf -d build/bsdsensors || true
 
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: bsdsensors-freebsd
+          name: bsdsensors-${{ github.sha }}
           path: build/bsdsensors
