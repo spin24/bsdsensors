@@ -8,7 +8,7 @@ on:
 jobs:
   freebsd:
     name: Build on FreeBSD
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
