@@ -9,6 +9,13 @@ set (bsdsensors_VERSION_MINOR 1)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
+option(BSDSENSORS_STATIC_BIN "Statically link everything into the bsdsensors executable" OFF)
+
+if (BSDSENSORS_STATIC_BIN)
+    # Make FindZLIB pick libz.a so no full-path .so sneaks past -static
+    set(ZLIB_USE_STATIC_LIBS ON)
+endif()
+
 find_package(protobuf CONFIG REQUIRED)
 find_package(gflags REQUIRED)
 find_package(glog REQUIRED)
@@ -16,8 +23,6 @@ find_package(glog REQUIRED)
 if (BUILD_TESTING)
 find_package(GTest REQUIRED)
 endif()
-
-option(BSDSENSORS_STATIC_BIN "Statically link everything into the bsdsensors executable" OFF)
 
 # config
 
