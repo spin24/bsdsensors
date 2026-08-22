@@ -17,6 +17,8 @@ if (BUILD_TESTING)
 find_package(GTest REQUIRED)
 endif()
 
+option(BSDSENSORS_STATIC_BIN "Statically link everything into the bsdsensors executable" OFF)
+
 # config
 
 configure_file (
@@ -48,13 +50,32 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(${PROJECT_NAME}-bin src/main.cc)
 set_target_properties(${PROJECT_NAME}-bin
     PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
-target_link_libraries(${PROJECT_NAME}-bin
-    ${PROJECT_NAME}
-    ${PROJECT_NAME}-protos
-    protobuf::libprotobuf
-    gflags
-    glog::glog
-    )
+if (BSDSENSORS_STATIC_BIN)
+    find_library(PROTOBUF_STATIC_LIB NAMES libprotobuf.a HINTS /usr/local/lib)
+    find_library(GLOG_STATIC_LIB NAMES libglog.a HINTS /usr/local/lib)
+    find_library(GFLAGS_STATIC_LIB NAMES libgflags.a HINTS /usr/local/lib)
+    if (NOT PROTOBUF_STATIC_LIB OR NOT GLOG_STATIC_LIB OR NOT GFLAGS_STATIC_LIB)
+        message(FATAL_ERROR "Static libraries for protobuf/glog/gflags not found")
+    endif()
+    set_property(TARGET ${PROJECT_NAME}-bin PROPERTY LINK_SEARCH_START_STATIC ON)
+    target_link_options(${PROJECT_NAME}-bin PRIVATE -static)
+    target_link_libraries(${PROJECT_NAME}-bin
+        ${PROJECT_NAME}
+        ${PROJECT_NAME}-protos
+        ${PROTOBUF_STATIC_LIB}
+        ${GLOG_STATIC_LIB}
+        ${GFLAGS_STATIC_LIB}
+        pthread z m
+        )
+else()
+    target_link_libraries(${PROJECT_NAME}-bin
+        ${PROJECT_NAME}
+        ${PROJECT_NAME}-protos
+        protobuf::libprotobuf
+        gflags
+        glog::glog
+        )
+endif()
 
 # install
 

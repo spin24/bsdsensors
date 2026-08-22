@@ -1,5 +1,9 @@
 file(GLOB SRCS *.cc *.h)
-add_library(${PROJECT_NAME} SHARED ${SRCS})
+if (BSDSENSORS_STATIC_BIN)
+    add_library(${PROJECT_NAME} STATIC ${SRCS})
+else()
+    add_library(${PROJECT_NAME} SHARED ${SRCS})
+endif()
 target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}-protos glog::glog protobuf::libprotobuf)
 
