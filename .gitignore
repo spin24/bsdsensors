@@ -36,4 +36,7 @@ compile_commands.json
 
 *.swp
 build
+build*/
+stage/
+*.core
 .ccls-cache

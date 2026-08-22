@@ -1,126 +1,130 @@
 # bsdsensors
 
-Getting sensor values on FreeBSD
+Hardware sensor monitoring for FreeBSD: temperatures, voltages, fan speeds
+and fan control, read directly from Super I/O chips.
 
-# Supported chips
+[![build](https://github.com/spin24/bsdsensors/actions/workflows/build.yml/badge.svg)](https://github.com/spin24/bsdsensors/actions/workflows/build.yml)
 
-## nuvoTon
+## Features
 
-* NCT5532D
+* Read temperature sensors
+* Set temperature sensor source
+* Read fan speed and duty cycle
+* View and configure fan control methods (SmartFan IV, Thermal Cruise,
+  Speed Cruise, Manual)
+* Read voltage sensors
 
-    Document available.
-    No hardware to test.
+## Quick start
 
-* NCT5577D
+CI builds a fully static FreeBSD binary on every push to `master`:
 
-    Docuemnt available.
-    This chip is weird: its chip ID is the same as NCT6776F, however their capabilities
-    are different. It's not clear if they really share the same ID, or the document is
-    wrong. Nonetheless, we can't identify it. Given that NCT5577D has 64 pins while NCT6776F
-    has 128 pins, maybe it's the same chip with less pins connected?
+```sh
+fetch https://github.com/spin24/bsdsensors/releases/download/ci-latest/bsdsensors
+chmod +x bsdsensors
+sudo ./bsdsensors
+```
 
-* NCT5562D
+Root privileges are required to access `/dev/io`.
 
-    Document available.
-    No hardware to test.
+## Usage
 
-* NCT6102D / NCT6106D
+```
+bsdsensors [options]
 
-    Document available.
-    No hardware to test.
+  --sensors=LIST   comma-separated sensors to print, e.g.
+                   temp:CPUTIN,volt:Vcore,fan:SYSFAN (with --value prints raw value only)
+  --chip=NAME      restrict output to one chip model
+  --debug          verbose logging
+  --quiet          suppress log output
+  --proto          print raw protobuf dump
+  --json           print sensors as JSON
+  --request=JSON   apply configuration changes (fan control etc.)
+  --dump           dump every register of the detected chip (can be dangerous)
+```
 
-* NCT6627UD / W83627UHG
+Default output:
 
-    Document available.
-    No hardware to test.
+```
+Temperatures:
+SENSOR             VALUE  SOURCE
+----------------  ------  -----------
+SMIOVT1            111 C  from SYSTIN
+SMIOVT2           33.5 C  from CPUTIN
+CPUTIN              33 C
+...
 
-* NCT6776F / NCT6776D
+Voltages:
+SENSOR    VALUE
+------  -------
+Vcore    0.88 V
+...
 
-    Document available.
-    No hardware to test.
-    Notice that the chip might be NCT5577D - their datasheets show same chip IDs, although
-    NCT5577D has less capability (2 fan controls, for example).a
+Fans:
+FAN       RPM  DUTY  METHOD       TEMP SOURCE
+-------  ----  ----  -----------  ---------------
+SYSFAN    891   34%  SmartFan IV  CPUTIN (33.5 C)
+CPUFAN   1269   34%  SmartFan IV  PECI0 (33 C)
+...
+```
 
-* NCT6779D
+Readings of ~100-111 C on unconnected inputs (`AUXTIN1..3`, unused `TSI*`,
+`DIM*`) are normal; those channels float when nothing is attached.
 
-    Document available.
-    No hardware to test.
+## Supported chips
 
-* NCT6791D
+### Nuvoton
 
-    Document available.
-    No hardware to test.
+| Chip                    | Status                        |
+| ----------------------- | ----------------------------- |
+| NCT5532D                | untested                      |
+| NCT5577D                | untested (ID shared w/ NCT6776F) |
+| NCT5562D                | untested                      |
+| NCT6102D / NCT6106D     | untested                      |
+| NCT6627UD / W83627UHG   | untested                      |
+| NCT6776F / NCT6776D     | untested                      |
+| NCT6779D                | untested                      |
+| NCT6791D (incl. 0xc803) | tested                        |
+| NCT6793D                | tested on ASUS Z270-A PRIME   |
+| NCT6796D                | tested on ASUS PRIME Z790-A WIFI |
+| NCT6799D-R              | tested on ASUS TUF GAMING B650-PLUS WIFI |
+| W83627HG-AW             | untested                      |
+| W83627DHG               | tested on Supermicro X7SPA-HF |
+| W83627DHG-P / -PT       | untested                      |
+| W83627EHF/EHG, EF/EG    | untested                      |
+| W83667HG                | tested on ASUS P5Q & P6T-SE   |
+| W83667HG-A              | untested                      |
+| W83697HF                | untested                      |
 
-* NCT6793D
+### ITE
 
-    Document available.
-    Tested on ASUS Z270-A PRIME
+* IT8772E (work in progress)
 
-* NCT6796D
-
-    Document available.
-    Tested on ASUS PRIME Z790-A WIFI
-
-* NCT6799D-R
-
-    Document available.
-    Tested on ASUS TUF GAMING B650-PLUS WIFI (chip ID 0xd802).
-
-* W83627HG-AW
-
-    Document available.
-    Not tested.
-
-* W83627DHG
-
-    Document available.
-    Tested on Supermicro X7SPA-HF (0xa025).
-
-* W83627DHG-P / W83627DHG-PT
-
-    Document available.
-    Not tested.
-
-* W83627EHF/EHG / W83627EF/EG
-
-    Document available.
-    Not tested.
-
-* W83667HG (lacks document)
-
-    Document unavailable, modified based on W83667HG-A.
-    Tested on ASUS P5Q & ASUS P6T-SE.
-
-* W83667HG-A
-
-    Document available.
-    Not tested.
-
-* W83697HF
-
-    Document available.
-    Not tested.
-
-## ITE
-
-* IT8772E (WIP)
-
-    Document available, not started.
-
-## Fintek
+### Fintek
 
 * F71869A
 
-    Document available.
-    No hardware to test.
+### Microchip
 
-## Microchip
+Not started.
 
-# Features
+## Building from source
 
-* Read from temperature sensor
-* Set temperature sensor's source
-* Read fan speed
-* Set fan speed control method
-* Set fan speed control parameters
-* Read from voltage sensor
+On FreeBSD:
+
+```sh
+pkg install -y cmake protobuf gflags glog
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
+To produce a single self-contained executable (no shared libraries needed at
+runtime), configure with `-DBSDSENSORS_STATIC_BIN=ON`. This expects static
+archives (`libprotobuf.a`, `libglog.a`, `libgflags.a`) to be available; see
+`.github/workflows/build.yml` for how CI builds them from source.
+
+Dependencies: CMake >= 3.16, protobuf, gflags, glog (GTest optional for tests).
+
+## License
+
+BSD 3-Clause. Copyright (c) 2018 Henry Hu, portions copyright (c) 2026
+spin24. See [LICENSE](LICENSE).
