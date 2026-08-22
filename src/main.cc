@@ -52,7 +52,11 @@ void PrintAllSensors(const SensorsProto& sensors, bool in_proto, bool in_json) {
         options.add_whitespace = true;
         options.preserve_proto_field_names = true;
 
-        ABSL_QCHECK_OK(MessageToJsonString(sensors, &json_string, options));
+        auto json_status = MessageToJsonString(sensors, &json_string, options);
+        if (!json_status.ok()) {
+            LOG(FATAL) << "Failed to convert to JSON: "
+                       << json_status.ToString();
+        }
         cout << json_string << endl;
     } else {
         PrintSensorValues(sensors, cout);
