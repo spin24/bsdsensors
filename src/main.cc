@@ -26,7 +26,6 @@ DEFINE_bool(quiet, false, "be quiet, less log");
 DEFINE_bool(value, false, "print value only");
 DEFINE_bool(proto, false, "print raw proto");
 DEFINE_bool(json, false, "print proto in json");
-DEFINE_bool(table, false, "print values as tables");
 DEFINE_string(request, "", "request configuration change");
 DEFINE_string(chip, "", "specify which chip to print");
 DEFINE_bool(dump, false, "dump everything (can be dangerous)");
@@ -59,10 +58,8 @@ void PrintAllSensors(const SensorsProto& sensors, bool in_proto, bool in_json) {
                        << json_status.ToString();
         }
         cout << json_string << endl;
-    } else if (FLAGS_table) {
-        PrintSensorValuesTable(sensors, cout);
     } else {
-        PrintSensorValues(sensors, cout);
+        PrintSensorValuesTable(sensors, cout);
     }
 }
 
@@ -134,9 +131,6 @@ int main(int argc, char** argv) {
                 continue;
             }
             if (FLAGS_sensors.empty()) {
-                if (!FLAGS_proto && !FLAGS_json && !FLAGS_table) {
-                    cout << chip->name() << "\nAdapter: ISA adapter\n";
-                }
                 PrintAllSensors(sensors, FLAGS_proto, FLAGS_json);
             } else {
                 PrintSelectedSensors(sensors, FLAGS_sensors, FLAGS_value,
