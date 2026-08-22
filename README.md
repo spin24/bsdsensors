@@ -83,7 +83,7 @@ Readings of ~100-111 C on unconnected inputs (`AUXTIN1..3`, unused `TSI*`,
 | NCT6627UD / W83627UHG   | untested                      |
 | NCT6776F / NCT6776D     | untested                      |
 | NCT6779D                | untested                      |
-| NCT6791D (incl. 0xc803) | tested                        |
+| NCT6791D (incl. 0xc803) | tested on ASUS H97-Plus       |
 | NCT6793D                | tested on ASUS Z270-A PRIME   |
 | NCT6796D                | tested on ASUS PRIME Z790-A WIFI |
 | NCT6799D-R              | tested on ASUS TUF GAMING B650-PLUS WIFI |
