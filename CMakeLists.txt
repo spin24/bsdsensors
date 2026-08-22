@@ -65,8 +65,10 @@ if (BSDSENSORS_STATIC_BIN)
     set_property(TARGET ${PROJECT_NAME}-bin PROPERTY LINK_SEARCH_START_STATIC ON)
     target_link_options(${PROJECT_NAME}-bin PRIVATE -static)
     target_link_libraries(${PROJECT_NAME}-bin
+        "-Wl,--whole-archive"
         ${PROJECT_NAME}
         ${PROJECT_NAME}-protos
+        "-Wl,--no-whole-archive"
         ${PROTOBUF_STATIC_LIB}
         ${GLOG_STATIC_LIB}
         ${GFLAGS_STATIC_LIB}
