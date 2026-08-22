@@ -9,6 +9,8 @@
 #include "nuvoton_fan_control.h"
 
 #include <algorithm>
+#include <cmath>
+#include <iomanip>
 #include <sstream>
 #include <vector>
 
@@ -44,14 +46,91 @@ void PrintVoltValue(const VoltageProto& volt, std::ostream& out) {
 }
 
 void PrintSensorValues(const SensorsProto& sensors, std::ostream& out) {
+    size_t label_width = 8;
     for (const auto& temp : sensors.temperatures()) {
-        PrintTempValue(temp, out);
+        label_width = max(label_width, temp.name().size() + 2);
     }
     for (const auto& volt : sensors.voltages()) {
-        PrintVoltValue(volt, out);
+        label_width = max(label_width, volt.name().size() + 2);
     }
     for (const auto& fan : sensors.fans()) {
-        PrintFanStatus(fan, out);
+        label_width = max(label_width, fan.name().size() + 2);
+    }
+
+    const int kValueWidth = 10;
+    auto print_row = [&](const string& name, const string& value,
+                         const string& suffix) {
+        out << name << ":"
+            << string(label_width - min(label_width, name.size() + 1), ' ');
+        out << string(kValueWidth - min(kValueWidth, value.size()), ' ')
+            << value;
+        if (!suffix.empty()) {
+            out << "  " << suffix;
+        }
+        out << "\n";
+    };
+
+    for (const auto& volt : sensors.voltages()) {
+        const double v = volt.value();
+        ostringstream ss;
+        ss << fixed << setprecision(2);
+        if (fabs(v) < 1.0) {
+            ss << v * 1000.0 << " mV";
+        } else {
+            ss << v << " V";
+        }
+        print_row(volt.name(), ss.str(), "");
+    }
+
+    for (const auto& temp : sensors.temperatures()) {
+        ostringstream ss;
+        ss << fixed << setprecision(1) << showpos << temp.value() << noshowpos
+           << "°C";
+        string suffix;
+        if (!temp.source().empty()) {
+            suffix = "(from " + temp.source() + ")";
+        }
+        print_row(temp.name(), ss.str(), suffix);
+    }
+
+    for (const auto& fan : sensors.fans()) {
+        if (!fan.has_speed()) {
+            continue;
+        }
+        ostringstream ss;
+        ss << fan.speed().value() << " RPM";
+        string suffix;
+        if (fan.has_control()) {
+            std::vector<std::string> parts;
+            const auto& control = fan.control();
+            if (control.has_current_percent()) {
+                parts.push_back(
+                    std::to_string(
+                        static_cast<int>(control.current_percent() * 100)) +
+                    "%");
+            }
+            if (control.has_current_method()) {
+                parts.push_back(control.current_method());
+            }
+            if (control.has_temp_source()) {
+                std::string source = control.temp_source();
+                if (control.has_temp_value()) {
+                    ostringstream ts;
+                    ts << fixed << setprecision(1) << control.temp_value()
+                       << " C";
+                    source += " at " + ts.str();
+                }
+                parts.push_back(source);
+            }
+            for (size_t i = 0; i < parts.size(); ++i) {
+                if (i > 0) suffix += ", ";
+                suffix += parts[i];
+            }
+            if (!suffix.empty()) {
+                suffix = "(" + suffix + ")";
+            }
+        }
+        print_row(fan.name(), ss.str(), suffix);
     }
 }
 

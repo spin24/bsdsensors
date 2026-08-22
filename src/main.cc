@@ -134,6 +134,9 @@ int main(int argc, char** argv) {
                 continue;
             }
             if (FLAGS_sensors.empty()) {
+                if (!FLAGS_proto && !FLAGS_json && !FLAGS_table) {
+                    cout << chip->name() << "\nAdapter: ISA adapter\n";
+                }
                 PrintAllSensors(sensors, FLAGS_proto, FLAGS_json);
             } else {
                 PrintSelectedSensors(sensors, FLAGS_sensors, FLAGS_value,
