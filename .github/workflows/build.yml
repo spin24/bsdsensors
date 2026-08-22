@@ -16,8 +16,26 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           usesh: true
+          cache-after-prepare: true
           prepare: |
-            pkg install -y cmake protobuf gflags glog googletest
+            set -e
+            pkg install -y cmake
+            cd /tmp
+            fetch -o gflags.tar.gz https://github.com/gflags/gflags/archive/refs/tags/v2.2.2.tar.gz
+            tar xzf gflags.tar.gz
+            cmake -S gflags-2.2.2 -B gflags-b -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local
+            cmake --build gflags-b -j $(sysctl -n hw.ncpu)
+            cmake --install gflags-b
+            fetch -o glog.tar.gz https://github.com/google/glog/archive/refs/tags/v0.6.0.tar.gz
+            tar xzf glog.tar.gz
+            cmake -S glog-0.6.0 -B glog-b -DBUILD_SHARED_LIBS=OFF -DWITH_GTEST=OFF -DCMAKE_INSTALL_PREFIX=/usr/local
+            cmake --build glog-b -j $(sysctl -n hw.ncpu)
+            cmake --install glog-b
+            fetch -o pb.tar.gz https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz
+            tar xzf pb.tar.gz
+            cmake -S protobuf-3.21.12 -B pb-b -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local
+            cmake --build pb-b -j $(sysctl -n hw.ncpu)
+            cmake --install pb-b
           run: |
             set -e
             cmake -B build -DCMAKE_BUILD_TYPE=Release -DBSDSENSORS_STATIC_BIN=ON
