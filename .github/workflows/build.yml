@@ -9,6 +9,8 @@ jobs:
   freebsd:
     name: Build on FreeBSD
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -49,3 +51,11 @@ jobs:
         with:
           name: bsdsensors-static-${{ github.run_id }}
           path: build/bsdsensors
+
+      - name: Publish to release
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ci-latest
+          files: build/bsdsensors
+          overwrite_files: true
