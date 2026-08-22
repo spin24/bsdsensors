@@ -10,10 +10,10 @@
 #include "port_io.h"
 
 #include <glog/logging.h>
-#include <absl/time/time.h>
-#include <absl/time/clock.h>
+#include <chrono>
+#include <thread>
 
-constexpr absl::Duration kTimeout = absl::Seconds(5);
+constexpr std::chrono::seconds kTimeout{5};
 
 namespace bsdsensors {
 
@@ -168,12 +168,12 @@ class ECSpaceBankedIO : public BankedIO {
     }
 
     Status WaitForAvailable(const PortAddress port) {
-        absl::Time start_time = absl::Now();
-        while (absl::Now() < start_time + kTimeout) {
+        const auto start_time = std::chrono::steady_clock::now();
+        while (std::chrono::steady_clock::now() - start_time < kTimeout) {
             uint8_t data;
             RETURN_IF_ERROR(port_io_->ReadByte(port, &data));
             if (data == 0xFF) return OkStatus();
-            absl::SleepFor(absl::Milliseconds(10));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         return Status(ETIMEDOUT, "waited too long for port to be available");
     }
