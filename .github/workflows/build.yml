@@ -42,9 +42,10 @@ jobs:
             cmake --build build
             file build/bsdsensors
             ldd build/bsdsensors || true
+            sha256 build/bsdsensors
 
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: bsdsensors-${{ github.sha }}
+          name: bsdsensors-static-${{ github.run_id }}
           path: build/bsdsensors
