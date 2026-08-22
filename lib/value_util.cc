@@ -62,7 +62,8 @@ void PrintSensorValues(const SensorsProto& sensors, std::ostream& out) {
                          const string& suffix) {
         out << name << ":"
             << string(label_width - min(label_width, name.size() + 1), ' ');
-        out << string(kValueWidth - min(kValueWidth, value.size()), ' ')
+        out << string(kValueWidth - min<size_t>(kValueWidth, value.size()),
+                     ' ')
             << value;
         if (!suffix.empty()) {
             out << "  " << suffix;
