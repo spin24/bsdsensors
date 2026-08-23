@@ -13,6 +13,7 @@ and fan control, read directly from Super I/O chips.
 * View and configure fan control methods (SmartFan IV, Thermal Cruise,
   Speed Cruise, Manual)
 * Read voltage sensors
+* Read disk temperatures via `smartctl(8)` (SATA, SAS and NVMe)
 
 ## Quick start
 
@@ -38,6 +39,7 @@ bsdsensors [options]
   --quiet          suppress log output
   --proto          print raw protobuf dump
   --json           print sensors as JSON
+  --nodisks        skip disk temperatures (smartctl)
   --request=JSON   apply configuration changes (fan control etc.)
   --dump           dump every register of the detected chip (can be dangerous)
 ```

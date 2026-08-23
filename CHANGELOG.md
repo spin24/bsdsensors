@@ -24,6 +24,9 @@ Differences vs upstream `master` ([f84c98a](https://github.com/HenryHu/bsdsensor
   shared libraries or packages are needed at runtime — copy one file and run.
   CI builds gflags/glog/protobuf from source specifically for this.
 - Table formatter for sensor output (`PrintSensorValuesTable`).
+- Disk temperatures via `smartctl(8)`: SATA/SAS/NVMe drives under `/dev`
+  (`ada*`, `da*`, `nvme*`) are appended to the temperature table with
+  source `smartctl`. Requires smartmontools; disable with `--nodisks`.
 
 ### Changed
 

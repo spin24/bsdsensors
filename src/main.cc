@@ -1,6 +1,7 @@
 /*
  * main.cc
  * Copyright (C) 2018 Henry Hu
+ * Copyright (C) 2026 spin24
  *
  * Distributed under terms of the 3-clause BSD license.
  */
@@ -12,6 +13,7 @@
 #include "util.h"
 #include "value_util.h"
 #include "dev_db.h"
+#include "disk_temp.h"
 #include "request.pb.h"
 #include <iostream>
 #include <unistd.h>
@@ -26,6 +28,7 @@ DEFINE_bool(quiet, false, "be quiet, less log");
 DEFINE_bool(value, false, "print value only");
 DEFINE_bool(proto, false, "print raw proto");
 DEFINE_bool(json, false, "print proto in json");
+DEFINE_bool(disks, true, "also read disk temperatures via smartctl");
 DEFINE_string(request, "", "request configuration change");
 DEFINE_string(chip, "", "specify which chip to print");
 DEFINE_bool(dump, false, "dump everything (can be dangerous)");
@@ -129,6 +132,9 @@ int main(int argc, char** argv) {
                 LOG(ERROR)
                     << "Error reading sensors: " << status.error_message();
                 continue;
+            }
+            if (FLAGS_disks) {
+                AddDiskTemperatures(&sensors);
             }
             if (FLAGS_sensors.empty()) {
                 PrintAllSensors(sensors, FLAGS_proto, FLAGS_json);
