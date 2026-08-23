@@ -60,9 +60,12 @@ bool RunSmartctl(const std::string& dev, std::string* output) {
     return true;
 }
 
+}  // namespace
+
 // Extracts the temperature from smartctl text output.
 // Handles ATA attribute tables (SATA), NVMe and SAS formats.
 bool ParseSmartTemperature(const std::string& text, double* temp) {
+    double ata194 = -1, ata190 = -1;
     std::istringstream ss(text);
     std::string line;
     while (std::getline(ss, line)) {
@@ -88,41 +91,54 @@ bool ParseSmartTemperature(const std::string& text, double* temp) {
             }
             continue;
         }
-        // SATA ATA attribute: "194 Temperature_Celsius ... 33"
+        // SATA ATA attribute line:
+        // "194 Temperature_Celsius 0x0002 044 044 000 Old_age Always - 37 (Min/Max 21/59)"
         std::istringstream ls(line);
         long id = 0;
-        if (!(ls >> id)) {
-            continue;
-        }
-        if (id != 194 && id != 190) {
+        if (!(ls >> id) || (id != 194 && id != 190)) {
             continue;
         }
         if (line.find("Temperature_Celsius") == std::string::npos &&
             line.find("Airflow_Temperature_Cel") == std::string::npos) {
             continue;
         }
+        std::vector<std::string> tokens;
         std::string token;
-        std::string value_col;
-        int column = 0;
         while (ls >> token) {
-            if (column == 3) {  // normalized VALUE column
-                value_col = token;
+            tokens.push_back(token);
+        }
+        // RAW_VALUE follows the UPDATED + WHEN_FAILED columns
+        // (WHEN_FAILED is "-"), e.g. "... Always - 37 (Min/Max 21/59)".
+        for (size_t i = 1; i + 1 < tokens.size(); ++i) {
+            if (tokens[i] != "-" ||
+                (tokens[i - 1] != "Always" && tokens[i - 1] != "Offline")) {
+                continue;
+            }
+            const char* raw = tokens[i + 1].c_str();
+            if (!std::isdigit(static_cast<unsigned char>(raw[0]))) {
                 break;
             }
-            ++column;
-        }
-        if (!value_col.empty()) {
-            const double value = atof(value_col.c_str());
+            const double value = atof(raw);
             if (value > 0 && value < 150) {
-                *temp = value;
-                return true;
+                if (id == 194) {
+                    ata194 = value;
+                } else {
+                    ata190 = value;
+                }
             }
+            break;
         }
+    }
+    if (ata194 > 0) {
+        *temp = ata194;
+        return true;
+    }
+    if (ata190 > 0) {
+        *temp = ata190;
+        return true;
     }
     return false;
 }
-
-}  // namespace
 
 void AddDiskTemperatures(SensorsProto* sensors) {
     DIR* dir = opendir("/dev");
